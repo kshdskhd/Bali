@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/plot/:id", "destination": "/index.html" }
+  ]
+}

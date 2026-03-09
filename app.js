@@ -540,9 +540,14 @@ function renderComparisonTable() {
 }
 
 // === Detail Page ===
-function viewDetail(id) {
+function viewDetail(id, skipPush) {
     const option = landOptions.find(o => o.id === id);
     if (!option) return;
+
+    // Push URL state for direct linking & back button
+    if (!skipPush) {
+        history.pushState({ page: 'detail', id: id }, '', `/plot/${id}`);
+    }
 
     document.getElementById('home-page').classList.add('hidden');
     document.getElementById('detail-page').classList.remove('hidden');
@@ -665,8 +670,11 @@ function viewDetail(id) {
     document.getElementById('detail-source').textContent = option.source;
 }
 
-function showHome(event) {
+function showHome(event, skipPush) {
     if (event) event.preventDefault();
+    if (!skipPush) {
+        history.pushState({ page: 'home' }, '', '/');
+    }
     document.getElementById('home-page').classList.remove('hidden');
     document.getElementById('detail-page').classList.add('hidden');
     document.documentElement.style.scrollBehavior = 'auto';
@@ -701,6 +709,31 @@ window.addEventListener('scroll', () => {
     }
 });
 
+// === URL Routing ===
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.page === 'detail' && e.state.id) {
+        viewDetail(e.state.id, true);
+    } else {
+        showHome(null, true);
+    }
+});
+
+function handleInitialRoute() {
+    const path = window.location.pathname;
+    const match = path.match(/^\/plot\/(.+)$/);
+    if (match) {
+        const id = decodeURIComponent(match[1]);
+        const option = landOptions.find(o => o.id === id);
+        if (option) {
+            history.replaceState({ page: 'detail', id: id }, '', `/plot/${id}`);
+            viewDetail(id, true);
+            return;
+        }
+    }
+    // Default: show home
+    history.replaceState({ page: 'home' }, '', window.location.pathname === '/' ? '/' : window.location.pathname);
+}
+
 // === Initialize ===
 document.addEventListener('DOMContentLoaded', () => {
     renderMapPins();
@@ -710,4 +743,5 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSlider('psqm');
     renderCards();
     renderComparisonTable();
+    handleInitialRoute();
 });
