@@ -217,56 +217,130 @@ function customizeMapStyle() {
 }
 
 function addZoneOverlays() {
+    // Zone polygons traced from Bali Home Immo reference map
+    // Shared vertices ensure zones tile the peninsula with no gaps
+
+    // Shared internal boundary points
+    const B1 = [115.122, -8.785]; // Balangan / red-yellow-green junction (north)
+    const B2 = [115.130, -8.795]; // red-yellow boundary mid
+    const B3 = [115.132, -8.805]; // red-yellow-orange junction
+    const B4 = [115.148, -8.798]; // yellow-green-orange junction
+    const B5 = [115.160, -8.792]; // yellow-green boundary (east of Balangan)
+    const B6 = [115.132, -8.818]; // red-orange boundary
+    const B7 = [115.128, -8.832]; // red-orange boundary mid
+    const B8 = [115.118, -8.845]; // red-orange boundary (south)
+    const B9 = [115.165, -8.808]; // orange-green boundary
+    const B10 = [115.178, -8.818]; // orange-green boundary
+    const B11 = [115.188, -8.830]; // orange-green boundary
+    const B12 = [115.198, -8.840]; // orange-green boundary (Pandawa junction)
+    const B13 = [115.210, -8.845]; // orange-green boundary (near Sawangan)
+
     const zoneGeoJSON = {
         type: 'FeatureCollection',
         features: [
             {
+                // RED — Very High Budget: Bingin, Padang Padang, West Uluwatu, Nyang Nyang
+                // Entire western coastline strip
                 type: 'Feature',
                 properties: { zone: 'very-high', color: '#e74c3c', label: 'Very High Budget' },
                 geometry: {
                     type: 'Polygon',
                     coordinates: [[
-                        [115.100, -8.790], [115.125, -8.788], [115.130, -8.795],
-                        [115.128, -8.810], [115.118, -8.815], [115.105, -8.812],
-                        [115.098, -8.802], [115.100, -8.790]
+                        [115.118, -8.778], // NW coast near Balangan
+                        B1,                // shared: red-yellow-green junction
+                        B2,                // shared: red-yellow mid
+                        B3,                // shared: red-yellow-orange junction
+                        B6,                // shared: red-orange
+                        B7,                // shared: red-orange mid
+                        B8,                // shared: red-orange south
+                        [115.105, -8.852], // Nyang Nyang coast
+                        [115.092, -8.848], // SW coast
+                        [115.078, -8.838], // Uluwatu temple area
+                        [115.075, -8.825], // West Uluwatu coast
+                        [115.080, -8.812], // Padang Padang coast
+                        [115.088, -8.800], // Bingin coast
+                        [115.098, -8.792], // Dreamland coast
+                        [115.108, -8.785], // Balangan Beach coast
+                        [115.118, -8.778]  // close
                     ]]
                 }
             },
             {
-                type: 'Feature',
-                properties: { zone: 'high', color: '#e67e22', label: 'High Budget' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                        [115.125, -8.810], [115.148, -8.808], [115.170, -8.830],
-                        [115.175, -8.845], [115.165, -8.855], [115.140, -8.850],
-                        [115.125, -8.840], [115.115, -8.825], [115.118, -8.815],
-                        [115.125, -8.810]
-                    ]]
-                }
-            },
-            {
+                // YELLOW — Medium Budget: Balangan area
+                // Crescent band between red (west) and green/orange (east)
                 type: 'Feature',
                 properties: { zone: 'medium', color: '#f1c40f', label: 'Medium Budget' },
                 geometry: {
                     type: 'Polygon',
                     coordinates: [[
-                        [115.130, -8.795], [115.155, -8.790], [115.170, -8.800],
-                        [115.175, -8.815], [115.170, -8.830], [115.148, -8.808],
-                        [115.125, -8.810], [115.128, -8.800], [115.130, -8.795]
+                        [115.118, -8.778], // NW coast
+                        [115.128, -8.772], // coast heading east
+                        [115.140, -8.770], // Kubu Beach area
+                        B5,                // shared: yellow-green east boundary
+                        B4,                // shared: yellow-green-orange junction
+                        B3,                // shared: red-yellow-orange junction
+                        B2,                // shared: red-yellow mid
+                        B1,                // shared: red-yellow-green junction
+                        [115.118, -8.778]  // close
                     ]]
                 }
             },
             {
+                // ORANGE — High Budget: Pecatu, East Uluwatu, Melasti, Pandawa
+                // Central-south region
+                type: 'Feature',
+                properties: { zone: 'high', color: '#e67e22', label: 'High Budget' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                        B3,                // shared: red-yellow-orange junction
+                        B4,                // shared: yellow-green-orange junction
+                        B9,                // shared: orange-green
+                        B10,               // shared: orange-green
+                        B11,               // shared: orange-green
+                        B12,               // shared: orange-green Pandawa
+                        B13,               // shared: orange-green Sawangan
+                        [115.200, -8.852], // Pandawa Beach coast
+                        [115.188, -8.855], // south coast
+                        [115.170, -8.858], // Melasti Beach area
+                        [115.150, -8.858], // south coast
+                        [115.132, -8.855], // south coast heading west
+                        [115.118, -8.852], // meets Nyang Nyang
+                        B8,                // shared: red-orange south
+                        B7,                // shared: red-orange mid
+                        B6,                // shared: red-orange
+                        B3                 // close
+                    ]]
+                }
+            },
+            {
+                // GREEN — Affordable Budget: Jimbaran, Nusa Dua, Benoa, Ungasan
+                // Entire northeast region
                 type: 'Feature',
                 properties: { zone: 'affordable', color: '#2ecc71', label: 'Affordable Budget' },
                 geometry: {
                     type: 'Polygon',
                     coordinates: [[
-                        [115.155, -8.770], [115.195, -8.770], [115.230, -8.785],
-                        [115.235, -8.815], [115.225, -8.840], [115.200, -8.850],
-                        [115.175, -8.845], [115.170, -8.830], [115.175, -8.815],
-                        [115.170, -8.800], [115.155, -8.790], [115.155, -8.770]
+                        [115.140, -8.770], // coast north of Balangan
+                        [115.150, -8.762], // Honeymoon Beach area
+                        [115.162, -8.755], // Jimbaran Bay south
+                        [115.172, -8.750], // Jimbaran Bay
+                        [115.185, -8.752], // Jimbaran east
+                        [115.200, -8.757], // heading to Benoa
+                        [115.218, -8.762], // Benoa peninsula
+                        [115.235, -8.770], // Tanjung Benoa
+                        [115.238, -8.788], // Nusa Dua north
+                        [115.235, -8.808], // Nusa Dua east coast
+                        [115.230, -8.825], // Nusa Dua south
+                        [115.222, -8.838], // Sawangan Beach
+                        B13,               // shared: orange-green Sawangan
+                        B12,               // shared: orange-green Pandawa
+                        B11,               // shared: orange-green
+                        B10,               // shared: orange-green
+                        B9,                // shared: orange-green
+                        B4,                // shared: yellow-green-orange junction
+                        B5,                // shared: yellow-green east
+                        [115.140, -8.770]  // close
                     ]]
                 }
             }
@@ -275,13 +349,14 @@ function addZoneOverlays() {
 
     baliMap.addSource('zones', { type: 'geojson', data: zoneGeoJSON });
 
+    // Add fills below markers but above base map
     baliMap.addLayer({
         id: 'zone-fills',
         type: 'fill',
         source: 'zones',
         paint: {
             'fill-color': ['get', 'color'],
-            'fill-opacity': 0.08
+            'fill-opacity': 0.18
         }
     });
 
@@ -291,9 +366,9 @@ function addZoneOverlays() {
         source: 'zones',
         paint: {
             'line-color': ['get', 'color'],
-            'line-width': 2,
-            'line-opacity': 0.25,
-            'line-dasharray': [4, 3]
+            'line-width': 2.5,
+            'line-opacity': 0.4,
+            'line-dasharray': [5, 3]
         }
     });
 }
