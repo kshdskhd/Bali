@@ -116,6 +116,7 @@ function setCurrency(currency) {
     updateSliderLabels();
     renderCards();
     renderComparisonTable();
+    refreshMapMarkers();
 }
 
 function setUnit(unit) {
@@ -131,6 +132,7 @@ function setUnit(unit) {
     updateSliderLabels();
     renderCards();
     renderComparisonTable();
+    refreshMapMarkers();
 }
 
 function updateSliderLabels() {
@@ -144,47 +146,235 @@ function updateSliderLabels() {
     updateSlider('psqm');
 }
 
-// === Render Map Pins ===
-function renderMapPins() {
-    const pinsGroup = document.getElementById('map-pins');
-    pinsGroup.innerHTML = '';
+// === MapLibre Interactive Map ===
+let baliMap = null;
+let mapMarkers = [];
+let activePopup = null;
+let mapInitialized = false;
 
-    landOptions.forEach(option => {
-        if (!option.mapPin) return;
-        const { x, y } = option.mapPin;
+function initMap() {
+    if (mapInitialized) return;
+    mapInitialized = true;
 
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.classList.add('map-pin');
-        g.setAttribute('data-id', option.id);
-        g.onclick = () => showMapInfo(option);
-
-        const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        ring.setAttribute('cx', x);
-        ring.setAttribute('cy', y);
-        ring.setAttribute('r', '12');
-        ring.classList.add('map-pin-ring');
-
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('cx', x);
-        dot.setAttribute('cy', y);
-        dot.setAttribute('r', '6');
-        dot.classList.add('map-pin-dot');
-
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', x);
-        text.setAttribute('y', y - 18);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', '#2c3e50');
-        text.setAttribute('font-size', '8');
-        text.setAttribute('font-weight', '600');
-        text.setAttribute('class', 'map-label');
-        text.textContent = option.shortTitle;
-
-        g.appendChild(ring);
-        g.appendChild(dot);
-        g.appendChild(text);
-        pinsGroup.appendChild(g);
+    baliMap = new maplibregl.Map({
+        container: 'maplibre-map',
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        center: [115.165, -8.818],
+        zoom: 11.8,
+        minZoom: 10,
+        maxZoom: 17,
+        pitch: 0,
+        maxBounds: [[114.95, -8.92], [115.35, -8.62]],
+        attributionControl: false
     });
+
+    baliMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    baliMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+
+    // Disable rotation on mobile
+    if (window.innerWidth <= 768) {
+        baliMap.dragRotate.disable();
+        baliMap.touchZoomRotate.disableRotation();
+    }
+
+    baliMap.on('load', () => {
+        customizeMapStyle();
+        addZoneOverlays();
+        addMapMarkers();
+    });
+}
+
+function customizeMapStyle() {
+    const layers = baliMap.getStyle().layers;
+    layers.forEach(layer => {
+        try {
+            // Mute water to soft blue-gray
+            if (layer.id.includes('water') && layer.type === 'fill') {
+                baliMap.setPaintProperty(layer.id, 'fill-color', '#c8d8e4');
+            }
+            // Mute land background
+            if (layer.type === 'background') {
+                baliMap.setPaintProperty(layer.id, 'background-color', '#f0ede6');
+            }
+            // Soften roads
+            if (layer.id.includes('road') && layer.type === 'line') {
+                baliMap.setPaintProperty(layer.id, 'line-opacity', 0.5);
+            }
+            // Mute labels
+            if (layer.type === 'symbol' && !layer.id.includes('place')) {
+                baliMap.setPaintProperty(layer.id, 'text-opacity', 0.5);
+            }
+            // Soften buildings
+            if (layer.id.includes('building') && layer.type === 'fill') {
+                baliMap.setPaintProperty(layer.id, 'fill-color', '#e8e4dc');
+            }
+            // Soften parks/green areas
+            if ((layer.id.includes('park') || layer.id.includes('landuse')) && layer.type === 'fill') {
+                baliMap.setPaintProperty(layer.id, 'fill-opacity', 0.3);
+            }
+        } catch (e) { /* skip layers that can't be modified */ }
+    });
+}
+
+function addZoneOverlays() {
+    const zoneGeoJSON = {
+        type: 'FeatureCollection',
+        features: [
+            {
+                type: 'Feature',
+                properties: { zone: 'very-high', color: '#e74c3c', label: 'Very High Budget' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                        [115.100, -8.790], [115.125, -8.788], [115.130, -8.795],
+                        [115.128, -8.810], [115.118, -8.815], [115.105, -8.812],
+                        [115.098, -8.802], [115.100, -8.790]
+                    ]]
+                }
+            },
+            {
+                type: 'Feature',
+                properties: { zone: 'high', color: '#e67e22', label: 'High Budget' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                        [115.125, -8.810], [115.148, -8.808], [115.170, -8.830],
+                        [115.175, -8.845], [115.165, -8.855], [115.140, -8.850],
+                        [115.125, -8.840], [115.115, -8.825], [115.118, -8.815],
+                        [115.125, -8.810]
+                    ]]
+                }
+            },
+            {
+                type: 'Feature',
+                properties: { zone: 'medium', color: '#f1c40f', label: 'Medium Budget' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                        [115.130, -8.795], [115.155, -8.790], [115.170, -8.800],
+                        [115.175, -8.815], [115.170, -8.830], [115.148, -8.808],
+                        [115.125, -8.810], [115.128, -8.800], [115.130, -8.795]
+                    ]]
+                }
+            },
+            {
+                type: 'Feature',
+                properties: { zone: 'affordable', color: '#2ecc71', label: 'Affordable Budget' },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                        [115.155, -8.770], [115.195, -8.770], [115.230, -8.785],
+                        [115.235, -8.815], [115.225, -8.840], [115.200, -8.850],
+                        [115.175, -8.845], [115.170, -8.830], [115.175, -8.815],
+                        [115.170, -8.800], [115.155, -8.790], [115.155, -8.770]
+                    ]]
+                }
+            }
+        ]
+    };
+
+    baliMap.addSource('zones', { type: 'geojson', data: zoneGeoJSON });
+
+    baliMap.addLayer({
+        id: 'zone-fills',
+        type: 'fill',
+        source: 'zones',
+        paint: {
+            'fill-color': ['get', 'color'],
+            'fill-opacity': 0.08
+        }
+    });
+
+    baliMap.addLayer({
+        id: 'zone-borders',
+        type: 'line',
+        source: 'zones',
+        paint: {
+            'line-color': ['get', 'color'],
+            'line-width': 2,
+            'line-opacity': 0.25,
+            'line-dasharray': [4, 3]
+        }
+    });
+}
+
+function createMarkerElement(option) {
+    const el = document.createElement('div');
+    el.className = 'ml-marker';
+    el.dataset.id = option.id;
+    el.innerHTML = `
+        <div class="marker-pin" style="--zone-color: ${option.zoneColor}">
+            <div class="marker-dot"></div>
+        </div>
+        <div class="marker-label">${option.shortTitle}<br><span style="font-weight:400;color:var(--accent)">${getTotalInCurrency(option)}</span></div>
+    `;
+    return el;
+}
+
+function addMapMarkers() {
+    mapMarkers = [];
+    landOptions.forEach((option, i) => {
+        if (!option.mapCoords) return;
+
+        const el = createMarkerElement(option);
+
+        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+            .setLngLat([option.mapCoords.lng, option.mapCoords.lat])
+            .addTo(baliMap);
+
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showMapPopup(option);
+            // Deselect all, select this
+            document.querySelectorAll('.ml-marker').forEach(m => m.classList.remove('marker-active'));
+            el.classList.add('marker-active');
+        });
+
+        mapMarkers.push({ marker, option, element: el, index: i });
+    });
+}
+
+function animateMarkersIn() {
+    mapMarkers.forEach((m, i) => {
+        setTimeout(() => {
+            m.element.classList.add('marker-visible');
+        }, i * 60);
+    });
+}
+
+function showMapPopup(option) {
+    if (activePopup) activePopup.remove();
+
+    const photoHtml = (option.photos && option.photos.length > 0)
+        ? `<div class="map-popup-img" style="background-image:url('${option.photos[0]}')"></div>`
+        : '';
+
+    const popupContent = `
+        <div class="map-popup">
+            ${photoHtml}
+            <div class="map-popup-body">
+                <div class="map-popup-zone" style="background:${option.zoneColor}">${option.zone}</div>
+                <h4>${option.title}</h4>
+                <p>${formatArea(option.landSize)} &bull; ${option.ownership.split('(')[0].trim()}</p>
+                <div class="map-popup-price">${getTotalInCurrency(option)}</div>
+                <button class="map-popup-btn" onclick="viewDetail('${option.id}')">View Details &rarr;</button>
+            </div>
+        </div>
+    `;
+
+    activePopup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '280px',
+        offset: [0, -45],
+        className: 'luxury-popup'
+    })
+    .setLngLat([option.mapCoords.lng, option.mapCoords.lat])
+    .setHTML(popupContent)
+    .addTo(baliMap);
+
+    // Also update sidebar panel
+    showMapInfo(option);
 }
 
 function showMapInfo(option) {
@@ -199,10 +389,63 @@ function showMapInfo(option) {
     panel.classList.remove('hidden');
 }
 
+function flyToPlot(optionId) {
+    const option = landOptions.find(o => o.id === optionId);
+    if (!option || !option.mapCoords) return;
+
+    // Scroll to map section
+    document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
+
+    setTimeout(() => {
+        baliMap.flyTo({
+            center: [option.mapCoords.lng, option.mapCoords.lat],
+            zoom: 15,
+            pitch: 40,
+            duration: 2000,
+            essential: true
+        });
+
+        setTimeout(() => {
+            showMapPopup(option);
+            // Highlight the marker
+            document.querySelectorAll('.ml-marker').forEach(m => m.classList.remove('marker-active'));
+            const markerEl = document.querySelector(`.ml-marker[data-id="${option.id}"]`);
+            if (markerEl) markerEl.classList.add('marker-active');
+        }, 2100);
+    }, 500);
+}
+
 function highlightZone(zone) {
-    document.querySelectorAll('.zone').forEach(z => z.classList.remove('active'));
-    const target = document.querySelector(`.zone[data-zone="${zone}"]`);
-    if (target) target.classList.add('active');
+    // For legend clicks — zoom to zone area
+    const zoneCenter = {
+        'very-high': { center: [115.115, -8.802], zoom: 14 },
+        'high': { center: [115.145, -8.832], zoom: 13 },
+        'medium': { center: [115.150, -8.805], zoom: 13.5 },
+        'affordable': { center: [115.195, -8.810], zoom: 12.5 }
+    };
+    const target = zoneCenter[zone];
+    if (target && baliMap) {
+        baliMap.flyTo({ ...target, duration: 1500, essential: true });
+    }
+}
+
+// Refresh marker labels when currency/unit changes
+function refreshMapMarkers() {
+    mapMarkers.forEach(m => {
+        const label = m.element.querySelector('.marker-label');
+        if (label) {
+            label.innerHTML = `${m.option.shortTitle}<br><span style="font-weight:400;color:var(--accent)">${getTotalInCurrency(m.option)}</span>`;
+        }
+    });
+    // Refresh active popup if open
+    if (activePopup && activePopup._lngLat) {
+        const popupOption = landOptions.find(o =>
+            o.mapCoords &&
+            Math.abs(o.mapCoords.lng - activePopup._lngLat.lng) < 0.001 &&
+            Math.abs(o.mapCoords.lat - activePopup._lngLat.lat) < 0.001
+        );
+        if (popupOption) showMapPopup(popupOption);
+    }
 }
 
 // === Range Slider Logic ===
@@ -467,6 +710,7 @@ function renderCards() {
                 }
                 <span class="card-zone-badge" style="${getZoneColorStyle(option.zoneColor)}">${option.zone}</span>
                 <span class="card-source-badge">${option.source}</span>
+                ${option.mapCoords ? `<button class="card-map-btn" onclick="event.stopPropagation(); flyToPlot('${option.id}')" title="Show on map">📍</button>` : ''}
             </div>
             <div class="card-body">
                 <div class="card-title">${option.title}</div>
@@ -680,6 +924,8 @@ function showHome(event, skipPush) {
     document.documentElement.style.scrollBehavior = 'auto';
     window.scrollTo(0, 0);
     document.documentElement.style.scrollBehavior = 'smooth';
+    // Resize map after container becomes visible again
+    if (baliMap) setTimeout(() => baliMap.resize(), 150);
 }
 
 // === Lightbox ===
@@ -736,7 +982,26 @@ function handleInitialRoute() {
 
 // === Initialize ===
 document.addEventListener('DOMContentLoaded', () => {
-    renderMapPins();
+    // Init map with IntersectionObserver for animated entrance
+    const mapSection = document.getElementById('map-section');
+    const mapObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (!mapInitialized) {
+                    initMap();
+                    // Wait for map load then animate markers
+                    baliMap.on('load', () => {
+                        setTimeout(() => animateMarkersIn(), 300);
+                    });
+                } else {
+                    animateMarkersIn();
+                }
+                mapObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    mapObserver.observe(mapSection);
+
     initSliderBounds();
     updateSlider('size');
     updateSlider('price');

@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -78,71 +79,27 @@
                         </div>
                         <div class="legend-divider"></div>
                         <div class="legend-item">
-                            <span class="legend-pin">&#128205;</span>
+                            <span class="legend-pin">📍</span>
                             <span>Available Land</span>
+                        </div>
+                        <div class="legend-item legend-hint">
+                            <span style="font-size:11px;color:var(--text-muted)">Click pins for details. Hover for price.</span>
                         </div>
                         <div id="map-info-panel" class="map-info-panel hidden">
                             <h4 id="map-info-title"></h4>
                             <p id="map-info-desc"></p>
                             <button onclick="viewDetail(this.dataset.id)" id="map-info-btn" class="btn-sm">View Details</button>
                         </div>
+                        <div class="legend-divider"></div>
+                        <div class="legend-offmap">
+                            <h4>Also Available</h4>
+                            <a href="#" onclick="viewDetail('dk-4'); return false;">Seminyak Premium</a>
+                            <a href="#" onclick="viewDetail('dk-5'); return false;">Umalas Bumbak</a>
+                            <a href="#" onclick="viewDetail('dk-6'); return false;">Umalas Umbak</a>
+                        </div>
                     </div>
                     <div class="map-container" id="map-container">
-                        <svg viewBox="0 0 1000 750" id="zone-map" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Ocean background -->
-                            <rect width="1000" height="750" fill="#dce8f0"/>
-
-                            <!-- Main peninsula shape -->
-                            <!-- Green Zone - Jimbaran / Ungasan / Nusa Dua (Affordable) -->
-                            <path class="zone zone-green" d="M450,50 L620,40 L720,60 L800,100 L850,160 L870,250 L860,350 L830,420 L780,480 L720,500 L650,510 L580,530 L520,540 L480,560 L450,530 L430,480 L420,420 L430,350 L440,280 L445,200 L448,120 Z"
-                                  fill="#2ecc71" fill-opacity="0.45" stroke="#27ae60" stroke-width="2" data-zone="affordable"
-                                  onclick="highlightZone('affordable')"/>
-
-                            <!-- Yellow Zone - Balangan / medium budget -->
-                            <path class="zone zone-yellow" d="M300,180 L370,150 L430,140 L448,120 L445,200 L440,280 L430,350 L420,420 L390,440 L350,430 L310,390 L280,340 L260,280 L270,220 Z"
-                                  fill="#f1c40f" fill-opacity="0.45" stroke="#d4ac0d" stroke-width="2" data-zone="medium"
-                                  onclick="highlightZone('medium')"/>
-
-                            <!-- Orange Zone - Pecatu / Padang Padang / East Uluwatu -->
-                            <path class="zone zone-orange" d="M200,350 L260,280 L280,340 L310,390 L350,430 L390,440 L420,420 L430,480 L450,530 L480,560 L520,540 L500,590 L450,640 L380,680 L300,690 L240,660 L190,610 L160,540 L150,470 L160,400 Z"
-                                  fill="#e67e22" fill-opacity="0.45" stroke="#ca6f1e" stroke-width="2" data-zone="high"
-                                  onclick="highlightZone('high')"/>
-
-                            <!-- Red Zone - West Uluwatu / Bingin / Padang Padang (Very High) -->
-                            <path class="zone zone-red" d="M100,300 L160,250 L200,240 L270,220 L260,280 L200,350 L160,400 L150,470 L140,500 L120,470 L90,420 L70,370 L80,330 Z"
-                                  fill="#e74c3c" fill-opacity="0.45" stroke="#c0392b" stroke-width="2" data-zone="very-high"
-                                  onclick="highlightZone('very-high')"/>
-
-                            <!-- Area Labels -->
-                            <text x="620" y="200" class="map-label" fill="#2c3e50" font-size="16" font-weight="700">JIMBARAN</text>
-                            <text x="780" y="350" class="map-label" fill="#2c3e50" font-size="14" font-weight="700">NUSA DUA</text>
-                            <text x="350" y="210" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">BALANGAN</text>
-                            <text x="220" y="310" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">BINGIN</text>
-                            <text x="120" y="380" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">WEST</text>
-                            <text x="110" y="398" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">ULUWATU</text>
-                            <text x="200" y="470" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">PADANG</text>
-                            <text x="200" y="488" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">PADANG</text>
-                            <text x="280" y="540" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">PECATU</text>
-                            <text x="430" y="600" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">EAST ULUWATU</text>
-                            <text x="460" y="460" class="map-label" fill="#2c3e50" font-size="14" font-weight="700">UNGASAN</text>
-                            <text x="530" y="660" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">MELASTI</text>
-                            <text x="680" y="540" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">PANDAWA</text>
-                            <text x="810" y="140" class="map-label" fill="#2c3e50" font-size="12" font-weight="700">BENOA</text>
-
-                            <!-- Beach labels -->
-                            <text x="310" y="175" class="map-label-beach" fill="#5a8fa8" font-size="9">Balangan Beach</text>
-                            <text x="180" y="268" class="map-label-beach" fill="#5a8fa8" font-size="9">Bingin Beach</text>
-                            <text x="80" y="450" class="map-label-beach" fill="#5a8fa8" font-size="9">Uluwatu Beach</text>
-                            <text x="120" y="560" class="map-label-beach" fill="#5a8fa8" font-size="9">Nyang Nyang Beach</text>
-                            <text x="380" y="700" class="map-label-beach" fill="#5a8fa8" font-size="9">Melasti Beach</text>
-                            <text x="630" y="570" class="map-label-beach" fill="#5a8fa8" font-size="9">Pandawa Beach</text>
-                            <text x="870" y="300" class="map-label-beach" fill="#5a8fa8" font-size="9">Nusa Dua Beach</text>
-                            <text x="610" y="85" class="map-label-beach" fill="#5a8fa8" font-size="9">Jimbaran Beach</text>
-                            <text x="440" y="105" class="map-label-beach" fill="#5a8fa8" font-size="9">Kedonganan Beach</text>
-
-                            <!-- Land Pins - will be populated by JS -->
-                            <g id="map-pins"></g>
-                        </svg>
+                        <div id="maplibre-map"></div>
                     </div>
                 </div>
             </div>
@@ -377,6 +334,7 @@
         </div>
     </footer>
 
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
