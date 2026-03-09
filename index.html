@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bali Land Options - Cledor & Mira Development</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo" onclick="showHome(event)">
+                <span class="logo-icon">&#9670;</span>
+                <span>Bali Land <span class="logo-accent">Portfolio</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="#map-section" class="nav-link" onclick="showHome(event)">Map</a>
+                <a href="#listings" class="nav-link" onclick="showHome(event)">All Listings</a>
+                <a href="#compare" class="nav-link" onclick="showHome(event)">Compare</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <main id="home-page">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-content">
+                <p class="hero-tag">Cledor & Mira Development</p>
+                <h1 class="hero-title">Premium Land<br>Opportunities in Bali</h1>
+                <p class="hero-subtitle">Curated investment-grade land plots across Uluwatu, Ungasan, Jimbaran, and beyond</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="total-listings">21</span>
+                        <span class="stat-label">Land Options</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">6</span>
+                        <span class="stat-label">Locations</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">425-9,700</span>
+                        <span class="stat-label">sqm Range</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Map Section -->
+        <section class="section" id="map-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Interactive Zone Map</h2>
+                    <p class="section-subtitle">Explore the Bukit Peninsula - click on zones and pins to discover available land</p>
+                </div>
+                <div class="map-wrapper">
+                    <div class="map-legend">
+                        <h3>Budget Zones</h3>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#e74c3c"></span>
+                            <span>Very High Budget</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#e67e22"></span>
+                            <span>High Budget</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f1c40f"></span>
+                            <span>Medium Budget</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#2ecc71"></span>
+                            <span>Affordable Budget</span>
+                        </div>
+                        <div class="legend-divider"></div>
+                        <div class="legend-item">
+                            <span class="legend-pin">&#128205;</span>
+                            <span>Available Land</span>
+                        </div>
+                        <div id="map-info-panel" class="map-info-panel hidden">
+                            <h4 id="map-info-title"></h4>
+                            <p id="map-info-desc"></p>
+                            <button onclick="viewDetail(this.dataset.id)" id="map-info-btn" class="btn-sm">View Details</button>
+                        </div>
+                    </div>
+                    <div class="map-container" id="map-container">
+                        <svg viewBox="0 0 1000 750" id="zone-map" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Ocean background -->
+                            <rect width="1000" height="750" fill="#dce8f0"/>
+
+                            <!-- Main peninsula shape -->
+                            <!-- Green Zone - Jimbaran / Ungasan / Nusa Dua (Affordable) -->
+                            <path class="zone zone-green" d="M450,50 L620,40 L720,60 L800,100 L850,160 L870,250 L860,350 L830,420 L780,480 L720,500 L650,510 L580,530 L520,540 L480,560 L450,530 L430,480 L420,420 L430,350 L440,280 L445,200 L448,120 Z"
+                                  fill="#2ecc71" fill-opacity="0.45" stroke="#27ae60" stroke-width="2" data-zone="affordable"
+                                  onclick="highlightZone('affordable')"/>
+
+                            <!-- Yellow Zone - Balangan / medium budget -->
+                            <path class="zone zone-yellow" d="M300,180 L370,150 L430,140 L448,120 L445,200 L440,280 L430,350 L420,420 L390,440 L350,430 L310,390 L280,340 L260,280 L270,220 Z"
+                                  fill="#f1c40f" fill-opacity="0.45" stroke="#d4ac0d" stroke-width="2" data-zone="medium"
+                                  onclick="highlightZone('medium')"/>
+
+                            <!-- Orange Zone - Pecatu / Padang Padang / East Uluwatu -->
+                            <path class="zone zone-orange" d="M200,350 L260,280 L280,340 L310,390 L350,430 L390,440 L420,420 L430,480 L450,530 L480,560 L520,540 L500,590 L450,640 L380,680 L300,690 L240,660 L190,610 L160,540 L150,470 L160,400 Z"
+                                  fill="#e67e22" fill-opacity="0.45" stroke="#ca6f1e" stroke-width="2" data-zone="high"
+                                  onclick="highlightZone('high')"/>
+
+                            <!-- Red Zone - West Uluwatu / Bingin / Padang Padang (Very High) -->
+                            <path class="zone zone-red" d="M100,300 L160,250 L200,240 L270,220 L260,280 L200,350 L160,400 L150,470 L140,500 L120,470 L90,420 L70,370 L80,330 Z"
+                                  fill="#e74c3c" fill-opacity="0.45" stroke="#c0392b" stroke-width="2" data-zone="very-high"
+                                  onclick="highlightZone('very-high')"/>
+
+                            <!-- Area Labels -->
+                            <text x="620" y="200" class="map-label" fill="#2c3e50" font-size="16" font-weight="700">JIMBARAN</text>
+                            <text x="780" y="350" class="map-label" fill="#2c3e50" font-size="14" font-weight="700">NUSA DUA</text>
+                            <text x="350" y="210" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">BALANGAN</text>
+                            <text x="220" y="310" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">BINGIN</text>
+                            <text x="120" y="380" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">WEST</text>
+                            <text x="110" y="398" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">ULUWATU</text>
+                            <text x="200" y="470" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">PADANG</text>
+                            <text x="200" y="488" class="map-label" fill="#2c3e50" font-size="11" font-weight="700">PADANG</text>
+                            <text x="280" y="540" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">PECATU</text>
+                            <text x="430" y="600" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">EAST ULUWATU</text>
+                            <text x="460" y="460" class="map-label" fill="#2c3e50" font-size="14" font-weight="700">UNGASAN</text>
+                            <text x="530" y="660" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">MELASTI</text>
+                            <text x="680" y="540" class="map-label" fill="#2c3e50" font-size="13" font-weight="700">PANDAWA</text>
+                            <text x="810" y="140" class="map-label" fill="#2c3e50" font-size="12" font-weight="700">BENOA</text>
+
+                            <!-- Beach labels -->
+                            <text x="310" y="175" class="map-label-beach" fill="#5a8fa8" font-size="9">Balangan Beach</text>
+                            <text x="180" y="268" class="map-label-beach" fill="#5a8fa8" font-size="9">Bingin Beach</text>
+                            <text x="80" y="450" class="map-label-beach" fill="#5a8fa8" font-size="9">Uluwatu Beach</text>
+                            <text x="120" y="560" class="map-label-beach" fill="#5a8fa8" font-size="9">Nyang Nyang Beach</text>
+                            <text x="380" y="700" class="map-label-beach" fill="#5a8fa8" font-size="9">Melasti Beach</text>
+                            <text x="630" y="570" class="map-label-beach" fill="#5a8fa8" font-size="9">Pandawa Beach</text>
+                            <text x="870" y="300" class="map-label-beach" fill="#5a8fa8" font-size="9">Nusa Dua Beach</text>
+                            <text x="610" y="85" class="map-label-beach" fill="#5a8fa8" font-size="9">Jimbaran Beach</text>
+                            <text x="440" y="105" class="map-label-beach" fill="#5a8fa8" font-size="9">Kedonganan Beach</text>
+
+                            <!-- Land Pins - will be populated by JS -->
+                            <g id="map-pins"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Listings Section -->
+        <section class="section section-alt" id="listings">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Available Land Options</h2>
+                    <p class="section-subtitle">Browse all available plots for development</p>
+                </div>
+
+                <!-- Filter Panel -->
+                <div class="filter-panel">
+                    <div class="filter-row-top">
+                        <div class="filter-row-location">
+                            <button class="filter-btn active" onclick="filterCards('all')">All</button>
+                            <button class="filter-btn" onclick="filterCards('ungasan')">Ungasan</button>
+                            <button class="filter-btn" onclick="filterCards('pecatu')">Pecatu / Uluwatu</button>
+                            <button class="filter-btn" onclick="filterCards('jimbaran')">Jimbaran</button>
+                            <button class="filter-btn" onclick="filterCards('pandawa')">Pandawa / Nusa Dua</button>
+                            <button class="filter-btn" onclick="filterCards('bingin')">Bingin</button>
+                            <button class="filter-btn" onclick="filterCards('seminyak')">Seminyak / Umalas</button>
+                            <button class="filter-btn" onclick="filterCards('freehold')">Freehold Only</button>
+                        </div>
+                        <div class="display-toggles">
+                            <div class="toggle-group">
+                                <label>Currency</label>
+                                <div class="toggle-btns">
+                                    <button class="toggle-btn active" onclick="setCurrency('USD')">USD</button>
+                                    <button class="toggle-btn" onclick="setCurrency('AED')">AED</button>
+                                </div>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Unit</label>
+                                <div class="toggle-btns">
+                                    <button class="toggle-btn active" onclick="setUnit('sqm')">sqm</button>
+                                    <button class="toggle-btn" onclick="setUnit('sqft')">sqft</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-row-ranges">
+                        <div class="filter-group">
+                            <label>Land Size <span id="slider-size-unit">(sqm)</span></label>
+                            <div class="range-slider" id="slider-size">
+                                <div class="range-track"><div class="range-fill"></div></div>
+                                <input type="range" class="range-min" min="0" max="10000" value="0" oninput="updateSlider('size')">
+                                <input type="range" class="range-max" min="0" max="10000" value="10000" oninput="updateSlider('size')">
+                            </div>
+                            <div class="range-values">
+                                <span id="slider-size-min-val">0</span>
+                                <span id="slider-size-max-val">10,000</span>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Total Price <span id="slider-price-unit">(USD)</span></label>
+                            <div class="range-slider" id="slider-price">
+                                <div class="range-track"><div class="range-fill"></div></div>
+                                <input type="range" class="range-min" min="0" max="15000000" value="0" step="50000" oninput="updateSlider('price')">
+                                <input type="range" class="range-max" min="0" max="15000000" value="15000000" step="50000" oninput="updateSlider('price')">
+                            </div>
+                            <div class="range-values">
+                                <span id="slider-price-min-val">$0</span>
+                                <span id="slider-price-max-val">$15M</span>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Price/<span id="slider-psqm-unit-label">sqm</span> <span id="slider-psqm-unit">(USD)</span></label>
+                            <div class="range-slider" id="slider-psqm">
+                                <div class="range-track"><div class="range-fill"></div></div>
+                                <input type="range" class="range-min" min="0" max="1500" value="0" step="10" oninput="updateSlider('psqm')">
+                                <input type="range" class="range-max" min="0" max="1500" value="1500" step="10" oninput="updateSlider('psqm')">
+                            </div>
+                            <div class="range-values">
+                                <span id="slider-psqm-min-val">$0</span>
+                                <span id="slider-psqm-max-val">$1,500</span>
+                            </div>
+                        </div>
+                        <button class="filter-reset" onclick="resetFilters()">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Results count -->
+                <div class="results-count" id="results-count"></div>
+
+                <div class="cards-grid" id="cards-grid">
+                    <!-- Cards populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="section" id="compare">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Comparison</h2>
+                    <p class="section-subtitle">All options at a glance - prices in IDR, USD, and AED</p>
+                </div>
+                <div class="table-wrapper">
+                    <table class="compare-table" id="compare-table">
+                        <thead>
+                            <tr>
+                                <th>Option</th>
+                                <th>Location</th>
+                                <th>Zone</th>
+                                <th>Area (sqm)</th>
+                                <th>Price/Are (IDR)</th>
+                                <th>Price/sqm (USD)</th>
+                                <th>Price/sqm (AED)</th>
+                                <th>Total (USD)</th>
+                                <th>Ownership</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compare-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Detail Page (hidden by default) -->
+    <div id="detail-page" class="hidden">
+        <div class="detail-hero" id="detail-hero">
+            <div class="detail-hero-overlay"></div>
+            <button class="back-btn" onclick="showHome(event)">&#8592; Back to All Options</button>
+            <div class="detail-hero-content">
+                <span class="detail-badge" id="detail-badge"></span>
+                <h1 class="detail-title" id="detail-title"></h1>
+                <p class="detail-location" id="detail-location"></p>
+            </div>
+        </div>
+
+        <div class="detail-body container">
+            <div class="detail-grid">
+                <div class="detail-main">
+                    <div class="detail-section">
+                        <h2>Overview</h2>
+                        <p id="detail-description"></p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h2>Property Details</h2>
+                        <div class="detail-specs" id="detail-specs">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="detail-section" id="detail-nearby-section">
+                        <h2>Nearby Facilities</h2>
+                        <ul id="detail-nearby"></ul>
+                    </div>
+
+                    <div class="detail-section" id="detail-photos-section">
+                        <h2>Photos</h2>
+                        <div class="photo-grid" id="detail-photos">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-sidebar">
+                    <div class="price-card">
+                        <h3>Pricing</h3>
+                        <div class="price-main" id="detail-price-per-are"></div>
+                        <div class="price-row">
+                            <span>Per sqm (IDR)</span>
+                            <span id="detail-price-sqm-idr"></span>
+                        </div>
+                        <div class="price-row">
+                            <span>Per sqm (USD)</span>
+                            <span id="detail-price-sqm-usd"></span>
+                        </div>
+                        <div class="price-row">
+                            <span>Per sqm (AED)</span>
+                            <span id="detail-price-sqm-aed"></span>
+                        </div>
+                        <div class="price-row">
+                            <span>Per sqft (USD)</span>
+                            <span id="detail-price-sqft-usd"></span>
+                        </div>
+                        <div class="price-divider"></div>
+                        <div class="price-row total">
+                            <span>Total (IDR)</span>
+                            <span id="detail-total-idr"></span>
+                        </div>
+                        <div class="price-row total">
+                            <span>Total (USD)</span>
+                            <span id="detail-total-usd"></span>
+                        </div>
+                        <div class="price-row total">
+                            <span>Total (AED)</span>
+                            <span id="detail-total-aed"></span>
+                        </div>
+                        <div id="detail-rental-section" class="hidden">
+                            <div class="price-divider"></div>
+                            <div class="price-row">
+                                <span>Rental/Are/Year</span>
+                                <span id="detail-rental"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="map-card" id="detail-map-card">
+                        <h3>Location</h3>
+                        <div id="detail-gmap" class="gmap-embed"></div>
+                        <a id="detail-gmap-link" href="#" target="_blank" class="btn-map">Open in Google Maps</a>
+                    </div>
+
+                    <div class="source-card">
+                        <h3>Source</h3>
+                        <p id="detail-source"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="lightbox" class="lightbox hidden" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Bali Land Portfolio - Prepared for Omar by Hannaan Kirmani</p>
+            <p class="footer-note">Cledor & Mira Development | All prices are indicative and subject to negotiation</p>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
