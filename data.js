@@ -37,7 +37,7 @@ const landOptions = [
             "Near The Istana (cliff-front meditation retreat)"
         ],
         highlights: ["Rare freehold in Bingin", "Ocean view", "Touristic zoning", "Splitable plot", "High-performing Airbnb area", "Near luxury developments"],
-        photos: ["images/gilly_bingin_oceanview_rf7845c.jpg"],
+        photos: ["images/gilly_bingin_oceanview_rf7845c.jpg", "images/bhi/bhi1_rf7845c.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/touristic-zoning-land-for-sale-freehold-leasehold-with-ocean-view-in-bingin-rf7845c",
         mapCoords: { lat: -8.812, lng: 115.128 },
         source: "Gillian Goh / Bali Home Immo",
@@ -72,7 +72,7 @@ const landOptions = [
             "Near New Kuta Golf"
         ],
         highlights: ["Larger plot in compound", "Freehold + Leasehold options", "Ocean view", "Touristic zoning", "Splitable", "High-performing Airbnb area"],
-        photos: ["images/gilly_bingin_oceanview_rf7845c.jpg"],
+        photos: ["images/bhi/bhi2_rf7845d_1.png", "images/bhi/bhi2_rf7845d_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/touristic-zoning-land-for-sale-freehold-leasehold-with-ocean-view-in-bingin-rf7845d",
         mapCoords: { lat: -8.813, lng: 115.129 },
         source: "Gillian Goh / Bali Home Immo",
@@ -142,7 +142,7 @@ const landOptions = [
             "Near The Links Golf Villa (26 units sold out)"
         ],
         highlights: ["Ocean + Golf course view", "3x payment plan available", "Near Jumeirah", "Touristic zoning", "Strategic location", "Surrounded by luxury villas"],
-        photos: [],
+        photos: ["images/bhi/bhi4_rf7697_1.png", "images/bhi/bhi4_rf7697_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/touristic-zoning-land-for-sale-with-ocean-view-and-directly-facing-the-golf-course-in-dreamland-rf7697",
         mapCoords: { lat: -8.795, lng: 115.098 },
         source: "Gillian Goh / Bali Home Immo",
@@ -173,7 +173,7 @@ const landOptions = [
             "Near touristic developments at foot of Cemongkak hill"
         ],
         highlights: ["Touristic zoning", "Splitable (min 5 are)", "Prime Bingin area", "Lower price point", "Near high-performing villas"],
-        photos: [],
+        photos: ["images/bhi/bhi5_rf5279_1.png", "images/bhi/bhi5_rf5279_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/leasehold/uluwatu/touristic-zoning-land-in-prime-area-for-sale-leasehold-in-bingin-rf5279",
         mapCoords: { lat: -8.808, lng: 115.122 },
         source: "Gillian Goh / Bali Home Immo",
@@ -207,7 +207,7 @@ const landOptions = [
             "Surrounded by new luxury villa developments"
         ],
         highlights: ["Stunning ocean view", "Near 5-star establishments", "27yr priority extension", "Touristic zoning", "Growing luxury area"],
-        photos: [],
+        photos: ["images/bhi/bhi6_rf7895_1.png", "images/bhi/bhi6_rf7895_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/leasehold/uluwatu/touristic-land-for-sale-leasehold-with-stunning-ocean-view-in-uluwatu-rf7895",
         mapCoords: { lat: -8.840, lng: 115.108 },
         source: "Gillian Goh / Bali Home Immo",
@@ -237,7 +237,7 @@ const landOptions = [
             "6 min to Nyang Nyang Beach"
         ],
         highlights: ["Mixed-use zoning", "Near Nunggalan Beach", "6 min to Nyang Nyang Beach", "Flexible development options"],
-        photos: [],
+        photos: ["images/bhi/bhi7_rf9468a.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/leasehold/uluwatu/mix-zone-land-for-sale-leasehold-in-nunggalan-rf9468a",
         mapCoords: { lat: -8.845, lng: 115.095 },
         source: "Gillian Goh / Bali Home Immo",
@@ -268,7 +268,7 @@ const landOptions = [
             "Newly paved access roads"
         ],
         highlights: ["Mixed-use zoning", "Near Nyang Nyang Beach", "Upcoming area", "Lower price per are"],
-        photos: [],
+        photos: ["images/bhi/bhi8_rf8483.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/leasehold/uluwatu/mix-zone-land-for-sale-leasehold-in-nyang-nyang-rf8483",
         mapCoords: { lat: -8.850, lng: 115.090 },
         source: "Gillian Goh / Bali Home Immo",
@@ -298,7 +298,7 @@ const landOptions = [
             "9 min to Nyang Nyang Beach"
         ],
         highlights: ["Touristic zoning", "Quiet area", "Near beaches", "Promising location"],
-        photos: [],
+        photos: ["images/bhi/bhi9_hr109.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/leasehold/uluwatu/touristic-land-for-sale-leasehold-in-uluwatu-hr109",
         mapCoords: { lat: -8.842, lng: 115.100 },
         source: "Gillian Goh / Bali Home Immo",
@@ -333,7 +333,7 @@ const landOptions = [
             "Off-plan construction happening around Balangan"
         ],
         highlights: ["Rare freehold in Balangan", "3,000 sqm - large plot", "Ocean view", "Rectangular shape", "Touristic zoning", "FH + LH options"],
-        photos: [],
+        photos: ["images/bhi/bhi10_hr075_1.png", "images/bhi/bhi10_hr075_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/touristic-zoning-land-for-sale-freehold-and-leasehold-with-ocean-view-in-balangan-hr075",
         mapCoords: { lat: -8.790, lng: 115.120 },
         source: "Gillian Goh / Bali Home Immo",
@@ -366,7 +366,7 @@ const landOptions = [
             "Near sport centre and amenities"
         ],
         highlights: ["Price just dropped", "Unobstructed ocean view", "Rare freehold", "On the hill - elevated", "New sports complex 180m away", "Touristic zoning"],
-        photos: [],
+        photos: ["images/bhi/bhi11_rf9418_1.png", "images/bhi/bhi11_rf9418_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/touristic-land-for-sale-freehold-with-unobstructed-ocean-view-in-balangan-rf9418",
         mapCoords: { lat: -8.792, lng: 115.118 },
         source: "Gillian Goh / Bali Home Immo",
@@ -403,7 +403,7 @@ const landOptions = [
             "1.4km to The Blossom Pandawa by Shovk"
         ],
         highlights: ["Rare touristic freehold", "Ocean view", "Flat land", "Near beach clubs", "Price negotiable", "Growing area"],
-        photos: [],
+        photos: ["images/bhi/bhi12_rf6751.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/ungasan/touristic-land-for-sale-freehold-with-ocean-view-in-melasti-rf6751",
         mapCoords: { lat: -8.850, lng: 115.155 },
         source: "Gillian Goh / Bali Home Immo",
@@ -435,7 +435,7 @@ const landOptions = [
             "Near luxury villa developments"
         ],
         highlights: ["Freehold touristic", "Ocean view", "Price negotiable", "Near Green Bowl Beach", "Comparison to RF6751"],
-        photos: [],
+        photos: ["images/bhi/bhi13_rf6752.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/ungasan/touristic-land-for-sale-freehold-with-ocean-view-in-melasti-rf6752",
         mapCoords: { lat: -8.851, lng: 115.156 },
         source: "Gillian Goh / Bali Home Immo",
@@ -466,7 +466,7 @@ const landOptions = [
             "West Ungasan location"
         ],
         highlights: ["Panoramic ocean view", "FH + LH options", "Touristic zoning", "Near GWK", "30yr leasehold option"],
-        photos: [],
+        photos: ["images/bhi/bhi14_rf9690_1.png", "images/bhi/bhi14_rf9690_2.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/ungasan/touristic-land-for-sale-freehold-and-leasehold-with-panoramic-ocean-view-in-ungasan-rf9690",
         mapCoords: { lat: -8.830, lng: 115.145 },
         source: "Gillian Goh / Bali Home Immo",
@@ -499,7 +499,7 @@ const landOptions = [
             "Near Octa Sun Residence"
         ],
         highlights: ["Prime Pandawa location", "Ocean view", "Splitable", "FH + LH options", "5m road access", "Touristic zoning"],
-        photos: [],
+        photos: ["images/bhi/bhi15_rf5924.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/pandawa/prime-oceanview-land-for-sale-near-pandawa-beach-a-perfect-investment-opportunity-rf5924",
         mapCoords: { lat: -8.845, lng: 115.175 },
         source: "Gillian Goh / Bali Home Immo",
@@ -532,7 +532,7 @@ const landOptions = [
             "East Uluwatu digital nomad area"
         ],
         highlights: ["Freehold", "Near Alila Uluwatu", "Touristic zoning", "5m road access", "Growing nomad area"],
-        photos: [],
+        photos: ["images/bhi/bhi16_rf3088.png"],
         mapLink: "https://bali-home-immo.com/realestate-property/for-sale/land/freehold/uluwatu/good-investment-land-for-sale-freehold-in-bali-near-alila-uluwatu-beach-rf3088",
         mapCoords: { lat: -8.838, lng: 115.112 },
         source: "Gillian Goh / Bali Home Immo",
