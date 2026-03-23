@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,6 +21,7 @@
                 <a href="#map-section" class="nav-link" onclick="showHome(event)">Map</a>
                 <a href="#listings" class="nav-link" onclick="showHome(event)">All Listings</a>
                 <a href="#compare" class="nav-link" onclick="showHome(event)">Compare</a>
+                <a href="#" class="nav-link nav-link-archive" onclick="toggleArchive(event)">Archive</a>
             </div>
         </div>
     </nav>
@@ -33,18 +33,18 @@
             <div class="hero-content">
                 <p class="hero-tag">Cledor & Mira Development</p>
                 <h1 class="hero-title">Premium Land<br>Opportunities in Bali</h1>
-                <p class="hero-subtitle">Curated investment-grade land plots across Uluwatu, Ungasan, Jimbaran, and beyond</p>
+                <p class="hero-subtitle">Curated investment-grade land plots across Bingin, Pecatu, Balangan, Ungasan, and Pandawa</p>
                 <div class="hero-stats">
                     <div class="stat">
-                        <span class="stat-number" id="total-listings">21</span>
+                        <span class="stat-number" id="total-listings">16</span>
                         <span class="stat-label">Land Options</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number">6</span>
+                        <span class="stat-number">7</span>
                         <span class="stat-label">Locations</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number">425-9,700</span>
+                        <span class="stat-number">800-3,000</span>
                         <span class="stat-label">sqm Range</span>
                     </div>
                 </div>
@@ -91,15 +91,11 @@
                             <button onclick="viewDetail(this.dataset.id)" id="map-info-btn" class="btn-sm">View Details</button>
                         </div>
                         <div class="legend-divider"></div>
-                        <div class="legend-offmap">
-                            <h4>Also Available</h4>
-                            <a href="#" onclick="viewDetail('dk-4'); return false;">Seminyak Premium</a>
-                            <a href="#" onclick="viewDetail('dk-5'); return false;">Umalas Bumbak</a>
-                            <a href="#" onclick="viewDetail('dk-6'); return false;">Umalas Umbak</a>
+                        <div class="legend-offmap" id="legend-offmap">
                         </div>
                     </div>
                     <div class="map-container" id="map-container">
-                        <div id="maplibre-map"></div>
+                        <!-- SVG map rendered by app.js -->
                     </div>
                 </div>
             </div>
@@ -109,22 +105,19 @@
         <section class="section section-alt" id="listings">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Available Land Options</h2>
-                    <p class="section-subtitle">Browse all available plots for development</p>
+                    <h2 class="section-title" id="listings-title">Available Land Options</h2>
+                    <p class="section-subtitle" id="listings-subtitle">Browse all available plots for development</p>
+                    <div class="view-tabs" id="view-tabs">
+                        <button class="view-tab active" onclick="switchView('active')">Current Options</button>
+                        <button class="view-tab" onclick="switchView('archive')">Archive</button>
+                    </div>
                 </div>
 
                 <!-- Filter Panel -->
                 <div class="filter-panel">
                     <div class="filter-row-top">
-                        <div class="filter-row-location">
-                            <button class="filter-btn active" onclick="filterCards('all')">All</button>
-                            <button class="filter-btn" onclick="filterCards('ungasan')">Ungasan</button>
-                            <button class="filter-btn" onclick="filterCards('pecatu')">Pecatu / Uluwatu</button>
-                            <button class="filter-btn" onclick="filterCards('jimbaran')">Jimbaran</button>
-                            <button class="filter-btn" onclick="filterCards('pandawa')">Pandawa / Nusa Dua</button>
-                            <button class="filter-btn" onclick="filterCards('bingin')">Bingin</button>
-                            <button class="filter-btn" onclick="filterCards('seminyak')">Seminyak / Umalas</button>
-                            <button class="filter-btn" onclick="filterCards('freehold')">Freehold Only</button>
+                        <div class="filter-row-location" id="filter-row-location">
+                            <!-- Populated by JS based on active/archive view -->
                         </div>
                         <div class="display-toggles">
                             <div class="toggle-group">
@@ -334,7 +327,6 @@
         </div>
     </footer>
 
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="data.js"></script>
     <script src="app.js"></script>
 </body>

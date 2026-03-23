@@ -1,3 +1,89 @@
+// === View State (active vs archive) ===
+let currentView = 'active'; // 'active' or 'archive'
+
+function getActiveData() {
+    return currentView === 'archive' ? archivedLandOptions : landOptions;
+}
+
+function getAllData() {
+    return [...landOptions, ...archivedLandOptions];
+}
+
+// Active filter button configs per view
+const activeFilterButtons = [
+    { label: 'All', tag: 'all' },
+    { label: 'Bingin / Dreamland', tag: 'bingin' },
+    { label: 'Pecatu / Uluwatu', tag: 'pecatu' },
+    { label: 'Balangan', tag: 'balangan' },
+    { label: 'Ungasan / Melasti', tag: 'ungasan' },
+    { label: 'Pandawa', tag: 'pandawa' },
+    { label: 'Freehold Only', tag: 'freehold' },
+    { label: 'Leasehold Only', tag: 'leasehold' }
+];
+
+const archiveFilterButtons = [
+    { label: 'All', tag: 'all' },
+    { label: 'Ungasan', tag: 'ungasan' },
+    { label: 'Pecatu / Uluwatu', tag: 'pecatu' },
+    { label: 'Jimbaran', tag: 'jimbaran' },
+    { label: 'Pandawa / Nusa Dua', tag: 'pandawa' },
+    { label: 'Bingin', tag: 'bingin' },
+    { label: 'Seminyak / Umalas', tag: 'seminyak' },
+    { label: 'Freehold Only', tag: 'freehold' }
+];
+
+function switchView(view) {
+    currentView = view;
+    activeFilters.location = 'all';
+
+    // Update tab buttons
+    document.querySelectorAll('.view-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view === 'archive' ? 'archive' : 'current'));
+    });
+
+    // Update section title/subtitle
+    const title = document.getElementById('listings-title');
+    const subtitle = document.getElementById('listings-subtitle');
+    if (view === 'archive') {
+        title.textContent = 'Archived Land Options';
+        subtitle.textContent = 'Previously listed plots — no longer actively marketed';
+    } else {
+        title.textContent = 'Available Land Options';
+        subtitle.textContent = 'Browse all available plots for development';
+    }
+
+    // Rebuild filter buttons
+    renderFilterButtons();
+
+    // Re-init sliders and re-render
+    mapInitialized = false;
+    document.getElementById('map-container').innerHTML = '';
+    initMap();
+    setTimeout(() => animateMarkersIn(), 300);
+
+    initSliderBounds();
+    updateSlider('size');
+    updateSlider('price');
+    updateSlider('psqm');
+    renderCards();
+    renderComparisonTable();
+}
+
+function renderFilterButtons() {
+    const container = document.getElementById('filter-row-location');
+    const buttons = currentView === 'archive' ? archiveFilterButtons : activeFilterButtons;
+    container.innerHTML = buttons.map((b, i) =>
+        `<button class="filter-btn${i === 0 ? ' active' : ''}" onclick="filterCards('${b.tag}')">${b.label}</button>`
+    ).join('');
+}
+
+function toggleArchive(event) {
+    event.preventDefault();
+    const newView = currentView === 'archive' ? 'active' : 'archive';
+    switchView(newView);
+    document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
+}
+
 // === Utility Functions ===
 function formatIDR(num) {
     if (num >= 1e12) return `IDR ${(num / 1e12).toFixed(1)}T`;
@@ -146,286 +232,211 @@ function updateSliderLabels() {
     updateSlider('psqm');
 }
 
-// === MapLibre Interactive Map ===
-let baliMap = null;
+// === Custom SVG Map ===
 let mapMarkers = [];
 let activePopup = null;
+let activePopupOption = null;
 let mapInitialized = false;
+
+const MAP_BOUNDS = { west: 115.065, east: 115.245, north: -8.735, south: -8.865 };
+const SVG_W = 1800, SVG_H = 1300;
+
+function gpsToSvg(lng, lat) {
+    return {
+        x: (lng - MAP_BOUNDS.west) / (MAP_BOUNDS.east - MAP_BOUNDS.west) * SVG_W,
+        y: (MAP_BOUNDS.north - lat) / (MAP_BOUNDS.north - MAP_BOUNDS.south) * SVG_H
+    };
+}
+
+function gpsToPercent(lng, lat) {
+    return {
+        left: (lng - MAP_BOUNDS.west) / (MAP_BOUNDS.east - MAP_BOUNDS.west) * 100,
+        top: (MAP_BOUNDS.north - lat) / (MAP_BOUNDS.north - MAP_BOUNDS.south) * 100
+    };
+}
+
+function coordsToPoints(coords) {
+    return coords.map(([lng, lat]) => { const p = gpsToSvg(lng, lat); return `${p.x},${p.y}`; }).join(' ');
+}
+
+function svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+}
 
 function initMap() {
     if (mapInitialized) return;
     mapInitialized = true;
+    activePopup = null;
+    activePopupOption = null;
 
-    baliMap = new maplibregl.Map({
-        container: 'maplibre-map',
-        style: 'https://tiles.openfreemap.org/styles/positron',
-        center: [115.165, -8.818],
-        zoom: 11.8,
-        minZoom: 10,
-        maxZoom: 17,
-        pitch: 0,
-        maxBounds: [[114.95, -8.92], [115.35, -8.62]],
-        attributionControl: false
-    });
+    const container = document.getElementById('map-container');
+    const svg = svgEl('svg', { viewBox: `0 0 ${SVG_W} ${SVG_H}`, id: 'svg-map', preserveAspectRatio: 'xMidYMid meet' });
 
-    baliMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    baliMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    // Ocean background
+    svg.appendChild(svgEl('rect', { width: SVG_W, height: SVG_H, fill: '#c8d8e4' }));
 
-    // Disable rotation on mobile
-    if (window.innerWidth <= 768) {
-        baliMap.dragRotate.disable();
-        baliMap.touchZoomRotate.disableRotation();
-    }
+    // Land mass
+    drawCoastline(svg);
 
-    baliMap.on('load', () => {
-        customizeMapStyle();
-        addZoneOverlays();
-        addMapMarkers();
-    });
+    // Zone overlays
+    addZoneOverlays(svg);
+
+    // Place labels
+    drawLabels(svg);
+
+    container.appendChild(svg);
+
+    // Pins layer (HTML overlay)
+    const pinsLayer = document.createElement('div');
+    pinsLayer.className = 'map-pins-layer';
+    pinsLayer.id = 'map-pins-layer';
+    container.appendChild(pinsLayer);
+
+    addMapMarkers();
+
+    // Click map background to dismiss popup
+    svg.addEventListener('click', () => dismissPopup());
 }
 
-function customizeMapStyle() {
-    const layers = baliMap.getStyle().layers;
-    layers.forEach(layer => {
-        try {
-            // Mute water to soft blue-gray
-            if (layer.id.includes('water') && layer.type === 'fill') {
-                baliMap.setPaintProperty(layer.id, 'fill-color', '#c8d8e4');
-            }
-            // Mute land background
-            if (layer.type === 'background') {
-                baliMap.setPaintProperty(layer.id, 'background-color', '#f0ede6');
-            }
-            // Soften roads
-            if (layer.id.includes('road') && layer.type === 'line') {
-                baliMap.setPaintProperty(layer.id, 'line-opacity', 0.5);
-            }
-            // Mute labels
-            if (layer.type === 'symbol' && !layer.id.includes('place')) {
-                baliMap.setPaintProperty(layer.id, 'text-opacity', 0.5);
-            }
-            // Soften buildings
-            if (layer.id.includes('building') && layer.type === 'fill') {
-                baliMap.setPaintProperty(layer.id, 'fill-color', '#e8e4dc');
-            }
-            // Soften parks/green areas
-            if ((layer.id.includes('park') || layer.id.includes('landuse')) && layer.type === 'fill') {
-                baliMap.setPaintProperty(layer.id, 'fill-opacity', 0.3);
-            }
-        } catch (e) { /* skip layers that can't be modified */ }
-    });
+function drawCoastline(svg) {
+    const coast = [
+        [115.148, -8.738], [115.140, -8.752], [115.135, -8.762], [115.128, -8.772],
+        [115.118, -8.778], [115.108, -8.785], [115.098, -8.792], [115.088, -8.800],
+        [115.080, -8.812], [115.075, -8.825], [115.078, -8.838], [115.082, -8.848],
+        [115.092, -8.855], [115.110, -8.860], [115.132, -8.858], [115.150, -8.860],
+        [115.170, -8.858], [115.188, -8.855], [115.200, -8.852], [115.210, -8.845],
+        [115.222, -8.838], [115.230, -8.825], [115.235, -8.808], [115.238, -8.788],
+        [115.235, -8.770], [115.228, -8.760], [115.218, -8.752], [115.200, -8.746],
+        [115.188, -8.741], [115.178, -8.738], [115.148, -8.738]
+    ];
+    svg.appendChild(svgEl('polygon', { points: coordsToPoints(coast), fill: '#f0ede6', stroke: '#d5d0c6', 'stroke-width': '2' }));
 }
 
-function addZoneOverlays() {
-    // Zone polygons traced from Bali Home Immo reference map
-    // Shared vertices ensure zones tile the peninsula with no gaps
+function addZoneOverlays(svg) {
+    const B1=[115.122,-8.785], B2=[115.130,-8.795], B3=[115.132,-8.805],
+          B4=[115.148,-8.798], B5=[115.160,-8.792], B6=[115.132,-8.818],
+          B7=[115.110,-8.830], B8=[115.090,-8.845], B9=[115.150,-8.808],
+          B10=[115.170,-8.818], B11=[115.172,-8.830], B12=[115.198,-8.840], B13=[115.210,-8.845];
 
-    // Shared internal boundary points
-    const B1 = [115.122, -8.785]; // Balangan / red-yellow-green junction (north)
-    const B2 = [115.130, -8.795]; // red-yellow boundary mid
-    const B3 = [115.132, -8.805]; // red-yellow-orange junction
-    const B4 = [115.148, -8.798]; // yellow-green-orange junction
-    const B5 = [115.160, -8.792]; // yellow-green boundary (east of Balangan)
-    const B6 = [115.132, -8.818]; // red-orange boundary
-    const B7 = [115.128, -8.832]; // red-orange boundary mid
-    const B8 = [115.118, -8.845]; // red-orange boundary (south)
-    const B9 = [115.165, -8.808]; // orange-green boundary
-    const B10 = [115.178, -8.818]; // orange-green boundary
-    const B11 = [115.188, -8.830]; // orange-green boundary
-    const B12 = [115.198, -8.840]; // orange-green boundary (Pandawa junction)
-    const B13 = [115.210, -8.845]; // orange-green boundary (near Sawangan)
+    const zones = [
+        { name:'very-high', color:'#e74c3c', coords:[
+            [115.118,-8.778],B1,B2,B3,B6,B7,B8,[115.082,-8.852],[115.092,-8.848],
+            [115.078,-8.838],[115.075,-8.825],[115.080,-8.812],[115.088,-8.800],
+            [115.098,-8.792],[115.108,-8.785],[115.118,-8.778]] },
+        { name:'medium', color:'#f1c40f', coords:[
+            [115.118,-8.778],[115.128,-8.772],[115.140,-8.770],B5,B4,B3,B2,B1,[115.118,-8.778]] },
+        { name:'high', color:'#e67e22', coords:[
+            B3,B4,B9,B10,B11,B12,B13,[115.200,-8.852],[115.188,-8.855],[115.170,-8.858],
+            [115.150,-8.858],[115.132,-8.855],[115.085,-8.852],B8,B7,B6,B3] },
+        { name:'affordable', color:'#2ecc71', coords:[
+            [115.140,-8.770],[115.150,-8.762],[115.162,-8.755],[115.172,-8.750],
+            [115.185,-8.752],[115.200,-8.757],[115.218,-8.762],[115.235,-8.770],
+            [115.238,-8.788],[115.235,-8.808],[115.230,-8.825],[115.222,-8.838],
+            B13,B12,B11,B10,B9,B4,B5,[115.140,-8.770]] }
+    ];
 
-    const zoneGeoJSON = {
-        type: 'FeatureCollection',
-        features: [
-            {
-                // RED — Very High Budget: Bingin, Padang Padang, West Uluwatu, Nyang Nyang
-                // Entire western coastline strip
-                type: 'Feature',
-                properties: { zone: 'very-high', color: '#e74c3c', label: 'Very High Budget' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                        [115.118, -8.778], // NW coast near Balangan
-                        B1,                // shared: red-yellow-green junction
-                        B2,                // shared: red-yellow mid
-                        B3,                // shared: red-yellow-orange junction
-                        B6,                // shared: red-orange
-                        B7,                // shared: red-orange mid
-                        B8,                // shared: red-orange south
-                        [115.105, -8.852], // Nyang Nyang coast
-                        [115.092, -8.848], // SW coast
-                        [115.078, -8.838], // Uluwatu temple area
-                        [115.075, -8.825], // West Uluwatu coast
-                        [115.080, -8.812], // Padang Padang coast
-                        [115.088, -8.800], // Bingin coast
-                        [115.098, -8.792], // Dreamland coast
-                        [115.108, -8.785], // Balangan Beach coast
-                        [115.118, -8.778]  // close
-                    ]]
-                }
-            },
-            {
-                // YELLOW — Medium Budget: Balangan area
-                // Crescent band between red (west) and green/orange (east)
-                type: 'Feature',
-                properties: { zone: 'medium', color: '#f1c40f', label: 'Medium Budget' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                        [115.118, -8.778], // NW coast
-                        [115.128, -8.772], // coast heading east
-                        [115.140, -8.770], // Kubu Beach area
-                        B5,                // shared: yellow-green east boundary
-                        B4,                // shared: yellow-green-orange junction
-                        B3,                // shared: red-yellow-orange junction
-                        B2,                // shared: red-yellow mid
-                        B1,                // shared: red-yellow-green junction
-                        [115.118, -8.778]  // close
-                    ]]
-                }
-            },
-            {
-                // ORANGE — High Budget: Pecatu, East Uluwatu, Melasti, Pandawa
-                // Central-south region
-                type: 'Feature',
-                properties: { zone: 'high', color: '#e67e22', label: 'High Budget' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                        B3,                // shared: red-yellow-orange junction
-                        B4,                // shared: yellow-green-orange junction
-                        B9,                // shared: orange-green
-                        B10,               // shared: orange-green
-                        B11,               // shared: orange-green
-                        B12,               // shared: orange-green Pandawa
-                        B13,               // shared: orange-green Sawangan
-                        [115.200, -8.852], // Pandawa Beach coast
-                        [115.188, -8.855], // south coast
-                        [115.170, -8.858], // Melasti Beach area
-                        [115.150, -8.858], // south coast
-                        [115.132, -8.855], // south coast heading west
-                        [115.118, -8.852], // meets Nyang Nyang
-                        B8,                // shared: red-orange south
-                        B7,                // shared: red-orange mid
-                        B6,                // shared: red-orange
-                        B3                 // close
-                    ]]
-                }
-            },
-            {
-                // GREEN — Affordable Budget: Jimbaran, Nusa Dua, Benoa, Ungasan
-                // Entire northeast region
-                type: 'Feature',
-                properties: { zone: 'affordable', color: '#2ecc71', label: 'Affordable Budget' },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                        [115.140, -8.770], // coast north of Balangan
-                        [115.150, -8.762], // Honeymoon Beach area
-                        [115.162, -8.755], // Jimbaran Bay south
-                        [115.172, -8.750], // Jimbaran Bay
-                        [115.185, -8.752], // Jimbaran east
-                        [115.200, -8.757], // heading to Benoa
-                        [115.218, -8.762], // Benoa peninsula
-                        [115.235, -8.770], // Tanjung Benoa
-                        [115.238, -8.788], // Nusa Dua north
-                        [115.235, -8.808], // Nusa Dua east coast
-                        [115.230, -8.825], // Nusa Dua south
-                        [115.222, -8.838], // Sawangan Beach
-                        B13,               // shared: orange-green Sawangan
-                        B12,               // shared: orange-green Pandawa
-                        B11,               // shared: orange-green
-                        B10,               // shared: orange-green
-                        B9,                // shared: orange-green
-                        B4,                // shared: yellow-green-orange junction
-                        B5,                // shared: yellow-green east
-                        [115.140, -8.770]  // close
-                    ]]
-                }
-            }
-        ]
-    };
-
-    baliMap.addSource('zones', { type: 'geojson', data: zoneGeoJSON });
-
-    // Add fills below markers but above base map
-    baliMap.addLayer({
-        id: 'zone-fills',
-        type: 'fill',
-        source: 'zones',
-        paint: {
-            'fill-color': ['get', 'color'],
-            'fill-opacity': 0.18
-        }
+    const g = svgEl('g', { id: 'zone-overlays' });
+    zones.forEach(z => {
+        g.appendChild(svgEl('polygon', {
+            points: coordsToPoints(z.coords), fill: z.color,
+            'fill-opacity': '0.18', stroke: z.color, 'stroke-width': '2.5',
+            'stroke-opacity': '0.4', 'stroke-dasharray': '10,6', 'data-zone': z.name
+        }));
     });
+    svg.appendChild(g);
+}
 
-    baliMap.addLayer({
-        id: 'zone-borders',
-        type: 'line',
-        source: 'zones',
-        paint: {
-            'line-color': ['get', 'color'],
-            'line-width': 2.5,
-            'line-opacity': 0.4,
-            'line-dasharray': [5, 3]
-        }
+function drawLabels(svg) {
+    const labels = [
+        { t:'Jimbaran', p:[115.175,-8.758], s:15, w:600 },
+        { t:'Ungasan', p:[115.162,-8.820], s:14, w:600 },
+        { t:'Pecatu', p:[115.125,-8.822], s:14, w:600 },
+        { t:'Nusa Dua', p:[115.225,-8.800], s:14, w:600 },
+        { t:'Bingin', p:[115.108,-8.795], s:12, w:500 },
+        { t:'Uluwatu', p:[115.085,-8.832], s:12, w:500 },
+        { t:'Pandawa', p:[115.188,-8.848], s:12, w:500 },
+        { t:'Tanjung Benoa', p:[115.230,-8.770], s:11, w:400, c:'#8a8a80' },
+        { t:'Balangan', p:[115.118,-8.775], s:10, w:400, c:'#8a8a80', i:true },
+        { t:'Dreamland', p:[115.095,-8.790], s:10, w:400, c:'#8a8a80', i:true },
+        { t:'Melasti', p:[115.155,-8.854], s:10, w:400, c:'#8a8a80', i:true },
+        { t:'Padang Padang', p:[115.075,-8.808], s:10, w:400, c:'#8a8a80', i:true },
+        { t:'Sawangan', p:[115.215,-8.840], s:10, w:400, c:'#8a8a80', i:true },
+    ];
+    const g = svgEl('g', { id: 'map-labels' });
+    labels.forEach(l => {
+        const { x, y } = gpsToSvg(l.p[0], l.p[1]);
+        const txt = svgEl('text', {
+            x, y, 'text-anchor': 'middle', 'font-family': "'DM Sans', sans-serif",
+            'font-size': l.s, 'font-weight': l.w, fill: l.c || '#3d3d38', 'pointer-events': 'none'
+        });
+        if (l.i) txt.setAttribute('font-style', 'italic');
+        txt.textContent = l.t;
+        g.appendChild(txt);
     });
+    svg.appendChild(g);
 }
 
 function createMarkerElement(option) {
     const el = document.createElement('div');
-    el.className = 'ml-marker';
+    el.className = 'map-pin-marker';
     el.dataset.id = option.id;
     el.innerHTML = `
-        <div class="marker-pin" style="--zone-color: ${option.zoneColor}">
-            <div class="marker-dot"></div>
+        <div class="pin-head" style="--pin-color: ${option.zoneColor}">
+            <div class="pin-inner"></div>
         </div>
-        <div class="marker-label">${option.shortTitle}<br><span style="font-weight:400;color:var(--accent)">${getTotalInCurrency(option)}</span></div>
+        <div class="pin-label">${option.shortTitle}<br><span style="font-weight:400;color:var(--accent)">${getTotalInCurrency(option)}</span></div>
     `;
     return el;
 }
 
 function addMapMarkers() {
+    const pinsLayer = document.getElementById('map-pins-layer');
     mapMarkers = [];
-    landOptions.forEach((option, i) => {
+    getActiveData().forEach((option, i) => {
         if (!option.mapCoords) return;
-
         const el = createMarkerElement(option);
-
-        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-            .setLngLat([option.mapCoords.lng, option.mapCoords.lat])
-            .addTo(baliMap);
-
+        const pos = gpsToPercent(option.mapCoords.lng, option.mapCoords.lat);
+        el.style.left = pos.left + '%';
+        el.style.top = pos.top + '%';
         el.addEventListener('click', (e) => {
             e.stopPropagation();
             showMapPopup(option);
-            // Deselect all, select this
-            document.querySelectorAll('.ml-marker').forEach(m => m.classList.remove('marker-active'));
-            el.classList.add('marker-active');
+            document.querySelectorAll('.map-pin-marker').forEach(m => m.classList.remove('pin-active'));
+            el.classList.add('pin-active');
         });
-
-        mapMarkers.push({ marker, option, element: el, index: i });
+        pinsLayer.appendChild(el);
+        mapMarkers.push({ option, element: el, index: i });
     });
 }
 
 function animateMarkersIn() {
     mapMarkers.forEach((m, i) => {
-        setTimeout(() => {
-            m.element.classList.add('marker-visible');
-        }, i * 60);
+        setTimeout(() => m.element.classList.add('pin-visible'), i * 60);
     });
 }
 
+function dismissPopup() {
+    if (activePopup) { activePopup.remove(); activePopup = null; activePopupOption = null; }
+    document.querySelectorAll('.map-pin-marker').forEach(m => m.classList.remove('pin-active'));
+}
+
 function showMapPopup(option) {
-    if (activePopup) activePopup.remove();
-
+    dismissPopup();
+    const container = document.getElementById('map-container');
+    const pos = gpsToPercent(option.mapCoords.lng, option.mapCoords.lat);
     const photoHtml = (option.photos && option.photos.length > 0)
-        ? `<div class="map-popup-img" style="background-image:url('${option.photos[0]}')"></div>`
-        : '';
+        ? `<div class="map-popup-img" style="background-image:url('${option.photos[0]}')"></div>` : '';
 
-    const popupContent = `
-        <div class="map-popup">
+    const popup = document.createElement('div');
+    popup.className = 'map-popup-overlay';
+    popup.id = 'active-map-popup';
+    popup.style.left = pos.left + '%';
+    popup.style.top = pos.top + '%';
+    popup.innerHTML = `
+        <div class="map-popup-card">
+            <button class="popup-close" onclick="dismissPopup()">&times;</button>
             ${photoHtml}
             <div class="map-popup-body">
                 <div class="map-popup-zone" style="background:${option.zoneColor}">${option.zone}</div>
@@ -436,19 +447,10 @@ function showMapPopup(option) {
             </div>
         </div>
     `;
-
-    activePopup = new maplibregl.Popup({
-        closeButton: true,
-        closeOnClick: false,
-        maxWidth: '280px',
-        offset: [0, -45],
-        className: 'luxury-popup'
-    })
-    .setLngLat([option.mapCoords.lng, option.mapCoords.lat])
-    .setHTML(popupContent)
-    .addTo(baliMap);
-
-    // Also update sidebar panel
+    popup.addEventListener('click', (e) => e.stopPropagation());
+    container.appendChild(popup);
+    activePopup = popup;
+    activePopupOption = option;
     showMapInfo(option);
 }
 
@@ -457,7 +459,6 @@ function showMapInfo(option) {
     const title = document.getElementById('map-info-title');
     const desc = document.getElementById('map-info-desc');
     const btn = document.getElementById('map-info-btn');
-
     title.textContent = option.title;
     desc.textContent = `${formatArea(option.landSize)} | ${option.zone} | ${getPricePerUnit(option)}/${getUnitLabel()}`;
     btn.dataset.id = option.id;
@@ -465,69 +466,45 @@ function showMapInfo(option) {
 }
 
 function flyToPlot(optionId) {
-    const option = landOptions.find(o => o.id === optionId);
+    const option = getActiveData().find(o => o.id === optionId);
     if (!option || !option.mapCoords) return;
-
-    // Scroll to map section
     document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
-
     setTimeout(() => {
-        baliMap.flyTo({
-            center: [option.mapCoords.lng, option.mapCoords.lat],
-            zoom: 15,
-            pitch: 40,
-            duration: 2000,
-            essential: true
-        });
-
-        setTimeout(() => {
-            showMapPopup(option);
-            // Highlight the marker
-            document.querySelectorAll('.ml-marker').forEach(m => m.classList.remove('marker-active'));
-            const markerEl = document.querySelector(`.ml-marker[data-id="${option.id}"]`);
-            if (markerEl) markerEl.classList.add('marker-active');
-        }, 2100);
-    }, 500);
+        showMapPopup(option);
+        document.querySelectorAll('.map-pin-marker').forEach(m => m.classList.remove('pin-active'));
+        const markerEl = document.querySelector(`.map-pin-marker[data-id="${option.id}"]`);
+        if (markerEl) markerEl.classList.add('pin-active');
+    }, 600);
 }
 
 function highlightZone(zone) {
-    // For legend clicks — zoom to zone area
-    const zoneCenter = {
-        'very-high': { center: [115.115, -8.802], zoom: 14 },
-        'high': { center: [115.145, -8.832], zoom: 13 },
-        'medium': { center: [115.150, -8.805], zoom: 13.5 },
-        'affordable': { center: [115.195, -8.810], zoom: 12.5 }
-    };
-    const target = zoneCenter[zone];
-    if (target && baliMap) {
-        baliMap.flyTo({ ...target, duration: 1500, essential: true });
-    }
+    document.querySelectorAll('#zone-overlays polygon').forEach(poly => {
+        poly.setAttribute('fill-opacity', poly.dataset.zone === zone ? '0.35' : '0.08');
+        poly.setAttribute('stroke-opacity', poly.dataset.zone === zone ? '0.8' : '0.2');
+    });
+    setTimeout(() => {
+        document.querySelectorAll('#zone-overlays polygon').forEach(poly => {
+            poly.setAttribute('fill-opacity', '0.18');
+            poly.setAttribute('stroke-opacity', '0.4');
+        });
+    }, 3000);
 }
 
-// Refresh marker labels when currency/unit changes
 function refreshMapMarkers() {
     mapMarkers.forEach(m => {
-        const label = m.element.querySelector('.marker-label');
+        const label = m.element.querySelector('.pin-label');
         if (label) {
             label.innerHTML = `${m.option.shortTitle}<br><span style="font-weight:400;color:var(--accent)">${getTotalInCurrency(m.option)}</span>`;
         }
     });
-    // Refresh active popup if open
-    if (activePopup && activePopup._lngLat) {
-        const popupOption = landOptions.find(o =>
-            o.mapCoords &&
-            Math.abs(o.mapCoords.lng - activePopup._lngLat.lng) < 0.001 &&
-            Math.abs(o.mapCoords.lat - activePopup._lngLat.lat) < 0.001
-        );
-        if (popupOption) showMapPopup(popupOption);
-    }
+    if (activePopupOption) showMapPopup(activePopupOption);
 }
 
 // === Range Slider Logic ===
 function initSliderBounds() {
     // Compute actual data ranges
     let maxSize = 0, maxPrice = 0, maxPsqm = 0;
-    landOptions.forEach(o => {
+    getActiveData().forEach(o => {
         const totalUSD = getTotalPrice(o) * IDR_TO_USD;
         const psqmUSD = getPricePerSqm(o) * IDR_TO_USD;
         let size = o.landSize;
@@ -668,11 +645,13 @@ function applySliderFilters() {
 
 // === Get Filtered Options ===
 function getFilteredOptions() {
-    let filtered = landOptions;
+    let filtered = getActiveData();
 
     // Location filter
     if (activeFilters.location === 'freehold') {
         filtered = filtered.filter(o => o.ownership.toLowerCase().includes('freehold') || o.ownership.includes('SHM'));
+    } else if (activeFilters.location === 'leasehold') {
+        filtered = filtered.filter(o => o.ownership.toLowerCase().includes('leasehold'));
     } else if (activeFilters.location !== 'all') {
         filtered = filtered.filter(o => o.filterTag === activeFilters.location);
     }
@@ -757,11 +736,13 @@ function renderCards() {
 
     const filtered = getFilteredOptions();
 
+    const data = getActiveData();
     const countEl = document.getElementById('results-count');
-    if (filtered.length === landOptions.length) {
-        countEl.innerHTML = `Showing all <strong>${landOptions.length}</strong> options`;
+    const viewLabel = currentView === 'archive' ? ' archived' : '';
+    if (filtered.length === data.length) {
+        countEl.innerHTML = `Showing all <strong>${data.length}</strong>${viewLabel} options`;
     } else {
-        countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of ${landOptions.length} options`;
+        countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of ${data.length}${viewLabel} options`;
     }
 
     if (filtered.length === 0) {
@@ -834,7 +815,7 @@ function renderComparisonTable() {
     const tbody = document.getElementById('compare-tbody');
     tbody.innerHTML = '';
 
-    landOptions.forEach(option => {
+    getActiveData().forEach(option => {
         const pricePerSqm = getPricePerSqm(option);
         const pricePerSqmUSD = pricePerSqm * IDR_TO_USD;
         const pricePerSqmAED = pricePerSqm * IDR_TO_AED;
@@ -860,7 +841,7 @@ function renderComparisonTable() {
 
 // === Detail Page ===
 function viewDetail(id, skipPush) {
-    const option = landOptions.find(o => o.id === id);
+    const option = getAllData().find(o => o.id === id);
     if (!option) return;
 
     // Push URL state for direct linking & back button
@@ -999,8 +980,8 @@ function showHome(event, skipPush) {
     document.documentElement.style.scrollBehavior = 'auto';
     window.scrollTo(0, 0);
     document.documentElement.style.scrollBehavior = 'smooth';
-    // Resize map after container becomes visible again
-    if (baliMap) setTimeout(() => baliMap.resize(), 150);
+    // Dismiss any open popup when returning home
+    dismissPopup();
 }
 
 // === Lightbox ===
@@ -1044,7 +1025,7 @@ function handleInitialRoute() {
     const match = path.match(/^\/plot\/(.+)$/);
     if (match) {
         const id = decodeURIComponent(match[1]);
-        const option = landOptions.find(o => o.id === id);
+        const option = getAllData().find(o => o.id === id);
         if (option) {
             history.replaceState({ page: 'detail', id: id }, '', `/plot/${id}`);
             viewDetail(id, true);
@@ -1057,6 +1038,9 @@ function handleInitialRoute() {
 
 // === Initialize ===
 document.addEventListener('DOMContentLoaded', () => {
+    // Render filter buttons for initial view
+    renderFilterButtons();
+
     // Init map with IntersectionObserver for animated entrance
     const mapSection = document.getElementById('map-section');
     const mapObserver = new IntersectionObserver((entries) => {
@@ -1064,10 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (entry.isIntersecting) {
                 if (!mapInitialized) {
                     initMap();
-                    // Wait for map load then animate markers
-                    baliMap.on('load', () => {
-                        setTimeout(() => animateMarkersIn(), 300);
-                    });
+                    setTimeout(() => animateMarkersIn(), 300);
                 } else {
                     animateMarkersIn();
                 }
